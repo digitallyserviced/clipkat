@@ -1,5 +1,5 @@
 tonic::include_proto!("manager");
-tonic::include_proto!("monitor");
+tonic::include_proto!("watcher");
 
 use std::str::FromStr;
 
@@ -25,9 +25,9 @@ impl From<crate::ClipboardMode> for i32 {
     fn from(t: crate::ClipboardMode) -> i32 { t as i32 }
 }
 
-impl From<crate::ClipboardData> for ClipboardData {
-    fn from(data: crate::ClipboardData) -> ClipboardData {
-        let crate::ClipboardData { id, data, mode, mime, timestamp } = data;
+impl From<crate::ClipEntry> for ClipboardData {
+    fn from(data: crate::ClipEntry) -> ClipboardData {
+        let crate::ClipEntry { id, data, mode, mime, timestamp } = data;
         let timestamp =
             timestamp.duration_since(std::time::UNIX_EPOCH).expect("duration since").as_millis()
                 as u64;
@@ -42,8 +42,8 @@ impl From<crate::ClipboardData> for ClipboardData {
     }
 }
 
-impl From<ClipboardData> for crate::ClipboardData {
-    fn from(data: ClipboardData) -> crate::ClipboardData {
+impl From<ClipboardData> for crate::ClipEntry {
+    fn from(data: ClipboardData) -> crate::ClipEntry {
         let timestamp = std::time::UNIX_EPOCH
             .checked_add(std::time::Duration::from_millis(data.timestamp))
             .unwrap_or_else(std::time::SystemTime::now);
@@ -53,34 +53,28 @@ impl From<ClipboardData> for crate::ClipboardData {
             Err(_) => mime::APPLICATION_OCTET_STREAM,
         };
 
-        crate::ClipboardData {
-            id: data.id,
-            data: data.data,
-            mode: data.mode.into(),
-            mime,
-            timestamp,
-        }
+        crate::ClipEntry { id: data.id, data: data.data, mode: data.mode.into(), mime, timestamp }
     }
 }
 
-impl From<MonitorState> for crate::MonitorState {
-    fn from(state: MonitorState) -> crate::MonitorState {
+impl From<WatcherState> for crate::ClipboardWatcherState {
+    fn from(state: WatcherState) -> crate::ClipboardWatcherState {
         match state {
-            MonitorState::Enabled => crate::MonitorState::Enabled,
-            MonitorState::Disabled => crate::MonitorState::Disabled,
+            WatcherState::Enabled => crate::ClipboardWatcherState::Enabled,
+            WatcherState::Disabled => crate::ClipboardWatcherState::Disabled,
         }
     }
 }
 
-impl Into<MonitorState> for crate::MonitorState {
-    fn into(self) -> MonitorState {
+impl Into<WatcherState> for crate::ClipboardWatcherState {
+    fn into(self) -> WatcherState {
         match self {
-            crate::MonitorState::Enabled => MonitorState::Enabled,
-            crate::MonitorState::Disabled => MonitorState::Disabled,
+            crate::ClipboardWatcherState::Enabled => WatcherState::Enabled,
+            crate::ClipboardWatcherState::Disabled => WatcherState::Disabled,
         }
     }
 }
 
-impl From<crate::MonitorState> for i32 {
-    fn from(state: crate::MonitorState) -> i32 { state as i32 }
+impl From<crate::ClipboardWatcherState> for i32 {
+    fn from(state: crate::ClipboardWatcherState) -> i32 { state as i32 }
 }
