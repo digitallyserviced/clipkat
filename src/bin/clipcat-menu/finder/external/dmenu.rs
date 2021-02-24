@@ -7,13 +7,13 @@ use crate::{
 pub struct Dmenu {
     menu_length: usize,
     line_length: usize,
+    menu_prompt: String,
 }
 
-impl Dmenu {
-    pub fn from_config(config: &config::Dmenu) -> Dmenu {
-        let config::Dmenu { menu_length, line_length } = *config;
-
-        Dmenu { menu_length, line_length }
+impl From<config::Dmenu> for Dmenu {
+    fn from(config: config::Dmenu) -> Dmenu {
+        let config::Dmenu { menu_length, line_length, menu_prompt } = config;
+        Dmenu { menu_length, line_length, menu_prompt }
     }
 }
 
@@ -21,7 +21,12 @@ impl ExternalProgram for Dmenu {
     fn program(&self) -> String { "dmenu".to_string() }
 
     fn args(&self, _selection_mode: SelectionMode) -> Vec<String> {
-        vec!["-l".to_owned(), self.menu_length.to_string()]
+        vec![
+            "-l".to_owned(),
+            self.menu_length.to_string(),
+            "-p".to_owned(),
+            self.menu_prompt.clone(),
+        ]
     }
 }
 

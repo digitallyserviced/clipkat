@@ -21,12 +21,14 @@ pub struct Config {
 pub struct Rofi {
     pub line_length: usize,
     pub menu_length: usize,
+    pub menu_prompt: String,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Dmenu {
     pub line_length: usize,
     pub menu_length: usize,
+    pub menu_prompt: String,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -49,11 +51,23 @@ impl Default for Config {
 }
 
 impl Default for Rofi {
-    fn default() -> Rofi { Rofi { line_length: 100, menu_length: 30 } }
+    fn default() -> Rofi {
+        Rofi {
+            line_length: 100,
+            menu_length: 30,
+            menu_prompt: clipcat::DEFAULT_MENU_PROMPT.to_owned(),
+        }
+    }
 }
 
 impl Default for Dmenu {
-    fn default() -> Dmenu { Dmenu { line_length: 100, menu_length: 30 } }
+    fn default() -> Dmenu {
+        Dmenu {
+            line_length: 100,
+            menu_length: 30,
+            menu_prompt: clipcat::DEFAULT_MENU_PROMPT.to_owned(),
+        }
+    }
 }
 
 impl Default for CustomFinder {

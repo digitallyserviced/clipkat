@@ -102,11 +102,9 @@ impl FinderRunner {
             FinderType::Builtin => None,
             FinderType::Skim => Some(Box::new(Skim::new())),
             FinderType::Fzf => Some(Box::new(Fzf::new())),
-            FinderType::Rofi => {
-                Some(Box::new(Rofi::from_config(&config.rofi.clone().unwrap_or_default())))
-            }
+            FinderType::Rofi => Some(Box::new(Rofi::from(config.rofi.clone().unwrap_or_default()))),
             FinderType::Dmenu => {
-                Some(Box::new(Dmenu::from_config(&config.dmenu.clone().unwrap_or_default())))
+                Some(Box::new(Dmenu::from(config.dmenu.clone().unwrap_or_default())))
             }
             FinderType::Custom => Some(Box::new(Custom::from_config(
                 &config.custom_finder.clone().unwrap_or_default(),

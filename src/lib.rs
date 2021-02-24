@@ -57,3 +57,5 @@ pub const DEFAULT_GRPC_HOST: &str = "127.0.0.1";
 
 pub const DEFAULT_WEBUI_PORT: u16 = 45046;
 pub const DEFAULT_WEBUI_HOST: &str = "127.0.0.1";
+
+pub const DEFAULT_MENU_PROMPT: &str = "Clipcat";
