@@ -67,12 +67,15 @@ impl ClipEntry {
             if self.is_utf8_string() || self.is_text() {
                 self.as_utf8_string()
             } else {
-                format!(
-                    "type: {}, size: {}, time: {:?}",
-                    self.mime.essence_str(),
-                    self.data.len(),
-                    self.timestamp
-                )
+                let content_type = self.mime.essence_str();
+                let size = self.data.len();
+                let timestamp = {
+                    use chrono::{offset::Utc, DateTime};
+                    let datetime: DateTime<Utc> = self.timestamp.into();
+                    datetime.to_rfc3339()
+                };
+
+                format!("content-type: {}, size: {}, timestamp: {}", content_type, size, timestamp)
             }
         };
 
