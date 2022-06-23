@@ -74,6 +74,7 @@ impl From<i32> for ClipboardType {
 #[derive(Debug, Eq, Clone, Serialize, Deserialize)]
 pub struct ClipboardData {
     pub id: u64,
+    pub size: usize,
     pub data: String,
     pub clipboard_type: ClipboardType,
     pub timestamp: SystemTime,
@@ -88,18 +89,22 @@ impl ClipboardData {
     }
 
     pub fn new_clipboard(data: &str) -> ClipboardData {
+        let cdata = data.to_owned();
         ClipboardData {
             id: Self::compute_id(data),
-            data: data.to_owned(),
+            data: cdata,
+            size: cdata.len(),
             clipboard_type: ClipboardType::Clipboard,
             timestamp: SystemTime::now(),
         }
     }
 
     pub fn new_primary(data: &str) -> ClipboardData {
+        let cdata = data.to_owned();
         ClipboardData {
             id: Self::compute_id(data),
-            data: data.to_owned(),
+            data: cdata,
+            size: cdata.len(),
             clipboard_type: ClipboardType::Primary,
             timestamp: SystemTime::now(),
         }
@@ -162,8 +167,9 @@ impl From<ClipboardEvent> for ClipboardData {
     fn from(event: ClipboardEvent) -> ClipboardData {
         let ClipboardEvent { data, clipboard_type } = event;
         let id = Self::compute_id(&data);
+        let size=data.len();
         let timestamp = SystemTime::now();
-        ClipboardData { id, data, clipboard_type, timestamp }
+        ClipboardData { id, data, size, clipboard_type, timestamp }
     }
 }
 
@@ -172,6 +178,7 @@ impl Default for ClipboardData {
         ClipboardData {
             id: 0,
             data: Default::default(),
+            size: 0,
             clipboard_type: ClipboardType::Primary,
             timestamp: SystemTime::UNIX_EPOCH,
         }

@@ -4,7 +4,9 @@ pkgs.mkShell {
   nativeBuildInputs = with pkgs; [
     git
     rustup
+    rust-analyzer
     cargo-make
+    cargo-all-features
 
     clang
     llvmPackages.libclang
