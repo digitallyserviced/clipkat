@@ -9,7 +9,8 @@ use crate::{
         manager_server::Manager, monitor_server::Monitor, BatchRemoveRequest, BatchRemoveResponse,
         ClearRequest, ClearResponse, DisableMonitorRequest, EnableMonitorRequest,
         GetCurrentClipboardRequest, GetCurrentClipboardResponse, GetCurrentPrimaryRequest,
-        GetCurrentPrimaryResponse, GetMonitorStateRequest, GetRequest, GetResponse, InsertRequest,
+        GetCurrentPrimaryResponse, GetMonitorStateRequest, GetRequest, GetResponse,
+        InfoRequest, InfoResponse, InsertRequest,
         InsertResponse, LengthRequest, LengthResponse, ListRequest, ListResponse,
         MarkAsClipboardRequest, MarkAsClipboardResponse, MarkAsPrimaryRequest,
         MarkAsPrimaryResponse, MonitorStateReply, RemoveRequest, RemoveResponse,
@@ -82,6 +83,15 @@ impl Manager for ManagerService {
             manager.clear();
         }
         Ok(Response::new(ClearResponse {}))
+    }
+
+    async fn info(&self, request: Request<InfoRequest>) -> Result<Response<InfoResponse>, Status> {
+        let InfoRequest { id } = request.into_inner();
+        let data = {
+            let manager = self.manager.lock().await;
+            manager.get(id).map(Into::into)
+        };
+        Ok(Response::new(InfoResponse { data }))
     }
 
     async fn get(&self, request: Request<GetRequest>) -> Result<Response<GetResponse>, Status> {

@@ -6,7 +6,7 @@ edition = "2018"
 
 [features]
 all = ["clipcatd", "clipcatctl", "clipcat-menu", "clipcat-notify"]
-default = ["clipcatd", "clipcatctl", "clipcat-menu"]
+default = ["clipcatd", "clipcatctl", "clipcat-menu", "clipcat-notify"]
 
 app = ["app_dirs", "structopt", "toml", "tracing-subscriber", "tracing-futures"]
 monitor = ["x11-clipboard"]
