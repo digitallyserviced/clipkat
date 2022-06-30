@@ -10,7 +10,7 @@ use crate::{
         ClearRequest, ClearResponse, DisableMonitorRequest, EnableMonitorRequest,
         GetCurrentClipboardRequest, GetCurrentClipboardResponse, GetCurrentPrimaryRequest,
         GetCurrentPrimaryResponse, GetMonitorStateRequest, GetRequest, GetResponse,
-        InfoRequest, InfoResponse, InsertRequest,
+        InfoRequest, InfoResponse, InsertRequest, SearchRequest, SearchResponse,
         InsertResponse, LengthRequest, LengthResponse, ListRequest, ListResponse,
         MarkAsClipboardRequest, MarkAsClipboardResponse, MarkAsPrimaryRequest,
         MarkAsPrimaryResponse, MonitorStateReply, RemoveRequest, RemoveResponse,
@@ -89,7 +89,7 @@ impl Manager for ManagerService {
         let InfoRequest { id } = request.into_inner();
         let data = {
             let manager = self.manager.lock().await;
-            manager.get(id).map(Into::into)
+            manager.info(id).map(Into::into)
         };
         Ok(Response::new(InfoResponse { data }))
     }
@@ -123,6 +123,15 @@ impl Manager for ManagerService {
             manager.get_current_primary().map(|clip| clip.clone().into())
         };
         Ok(Response::new(GetCurrentPrimaryResponse { data }))
+    }
+
+    async fn search(&self, request: Request<SearchRequest>) -> Result<Response<SearchResponse>, Status> {
+        let SearchRequest{pat} = request.into_inner();
+        let data = {
+            let manager = self.manager.lock().await;
+            manager.search(pat).into_iter().map(Into::into).collect()
+        };
+        Ok(Response::new(SearchResponse { data }))
     }
 
     async fn list(&self, _request: Request<ListRequest>) -> Result<Response<ListResponse>, Status> {

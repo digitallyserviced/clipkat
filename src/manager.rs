@@ -55,6 +55,19 @@ impl ClipboardManager {
     pub fn iter(&self) -> impl Iterator<Item = &ClipboardData> { self.clips.values() }
 
     #[inline]
+    pub fn search(&self, pat: String) -> Vec<ClipboardData> { 
+        self.clips.iter().filter_map(|(_id, v)| {
+            match v.to_owned().data.contains(&pat) {
+                true => Some(v.to_owned()),
+                false => None
+            }
+    }
+    ).collect() }
+    
+    #[inline]
+    pub fn info(&self, id: u64) -> Option<ClipboardData> { self.clips.get(&id).map(Clone::clone) }
+
+    #[inline]
     pub fn get(&self, id: u64) -> Option<ClipboardData> { self.clips.get(&id).map(Clone::clone) }
 
     #[inline]
@@ -148,7 +161,8 @@ impl ClipboardManager {
 
         let new_id = ClipboardData::compute_id(data);
         let data = data.to_owned();
-        let data = ClipboardData { id: new_id, data, timestamp, clipboard_type };
+        let size = data.len();
+        let data = ClipboardData { id: new_id, data, size, timestamp, clipboard_type };
 
         self.insert_inner(data);
         (true, new_id)

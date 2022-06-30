@@ -3,7 +3,9 @@ syntax = "proto3";
 package manager;
 
 service Manager {
+  /* rpc Watch(WatchRequest) returns (stream InfoResponse); */
   rpc List(ListRequest) returns (ListResponse);
+  rpc Search(SearchRequest) returns (SearchResponse);
 
   rpc Get(GetRequest) returns (GetResponse);
   rpc Info(InfoRequest) returns (InfoResponse);
@@ -35,6 +37,7 @@ message ClipboardData {
   string data = 2;
   ClipboardType clipboard_type = 3;
   uint64 timestamp = 4;
+  uint64 size = 5; 
 }
 
 message InsertRequest {
@@ -57,6 +60,9 @@ message GetCurrentPrimaryResponse { ClipboardData data = 1; }
 
 message ListRequest {}
 message ListResponse { repeated ClipboardData data = 1; }
+
+message SearchRequest { string pat = 1; }
+message SearchResponse { repeated ClipboardData data = 1; }
 
 message UpdateRequest {
   uint64 id = 1;

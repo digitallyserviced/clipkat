@@ -9,6 +9,7 @@ use crate::{
         manager_client::ManagerClient, monitor_client::MonitorClient, BatchRemoveRequest,
         ClearRequest, DisableMonitorRequest, EnableMonitorRequest, GetCurrentClipboardRequest,
         GetCurrentPrimaryRequest, GetMonitorStateRequest, GetRequest, InsertRequest, LengthRequest,
+        InfoRequest, InfoResponse, SearchRequest, SearchResponse,
         ListRequest, MarkAsClipboardRequest, MarkAsPrimaryRequest, RemoveRequest,
         ToggleMonitorRequest, UpdateRequest,
     },
@@ -25,6 +26,12 @@ pub enum GrpcClientError {
 
     #[snafu(display("Could not list clips, error: {}", source))]
     List { source: TonicStatus },
+
+    #[snafu(display("Could not find clip with pattern {}, error: {}", pat, source))]
+    Search { pat: String, source: TonicStatus },
+
+    #[snafu(display("Could not get clip with id {}, error: {}", id, source))]
+    GetInfo { id: u64, source: TonicStatus },
 
     #[snafu(display("Could not get clip with id {}, error: {}", id, source))]
     GetData { id: u64, source: TonicStatus },
@@ -116,6 +123,50 @@ impl GrpcClient {
 
     pub async fn insert_primary(&mut self, data: &str) -> Result<u64, GrpcClientError> {
         self.insert(data, ClipboardType::Primary).await
+    }
+
+    pub async fn search(&mut self, pat: Option<String>) -> Result<Vec<ClipboardData>, GrpcClientError> {
+        match pat {
+            Some(pat) => {
+                let request = Request::new(SearchRequest{pat:pat.to_owned()});
+                let response = self.manager_client.search(request).await.context(Search{pat})?;
+        let mut list: Vec<_> = response
+            .into_inner()
+            .data
+            .into_iter()
+            .map(|data| {
+                let timestamp = std::time::UNIX_EPOCH
+                    .checked_add(std::time::Duration::from_millis(data.timestamp))
+                    .unwrap_or_else(std::time::SystemTime::now);
+                ClipboardData {
+                    id: data.id,
+                    size: data.size as usize,
+                    data: data.data,
+                    clipboard_type: data.clipboard_type.into(),
+                    timestamp,
+                }
+            })
+            .collect();
+        list.sort();
+        Ok(list)
+        },
+            None => Err(GrpcClientError::Empty),
+        }
+    }
+
+    pub async fn info(&mut self, id: Option<u64>) -> Result<ClipboardData, GrpcClientError> {
+        match id {
+            Some(id) => {
+                let request = Request::new(InfoRequest { id });
+                let response = self.manager_client.info(request).await.context(GetInfo { id })?;
+                match response.into_inner().data {
+                    Some(data) => Ok(data.into()),
+                    None => Err(GrpcClientError::Empty),
+                }
+                
+            },
+            None => Err(GrpcClientError::Empty),
+        }
     }
 
     pub async fn get(&mut self, id: u64) -> Result<String, GrpcClientError> {
@@ -210,6 +261,7 @@ impl GrpcClient {
                     .unwrap_or_else(std::time::SystemTime::now);
                 ClipboardData {
                     id: data.id,
+                    size: data.size as usize,
                     data: data.data,
                     clipboard_type: data.clipboard_type.into(),
                     timestamp,

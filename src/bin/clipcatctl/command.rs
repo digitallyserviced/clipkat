@@ -1,10 +1,15 @@
 use std::{num::ParseIntError, path::PathBuf};
 
 use snafu::ResultExt;
+use structopt::clap::AppSettings::*;
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
 
-use clipcat::{editor::ExternalEditor, grpc::GrpcClient, MonitorState};
+use clipcat::{
+    editor::ExternalEditor,
+    grpc::{GrpcClient, GrpcClientError},
+    ClipboardData, MonitorState,
+};
 
 use crate::{
     config::Config,
@@ -12,7 +17,7 @@ use crate::{
 };
 
 #[derive(StructOpt)]
-#[structopt(name = clipcat::CTL_PROGRAM_NAME)]
+#[structopt(name = clipcat::CTL_PROGRAM_NAME, setting(ColorAuto), setting(ColoredHelp))]
 pub struct Command {
     #[structopt(subcommand)]
     subcommand: Option<SubCommand>,
@@ -71,6 +76,21 @@ pub enum SubCommand {
     SavePrimary {
         #[structopt(long = "file", short = "f")]
         file_path: Option<PathBuf>,
+    },
+
+    #[structopt(about = "Searches for clips with <pat> contained")]
+    Search {
+        #[structopt(long = "context", short = "C")]
+        context: bool,
+        
+        #[structopt(parse(try_from_str))]
+        pat: Option<String>,
+    },
+
+    #[structopt(about = "Prints metadata for clip <id> without content")]
+    Info {
+        #[structopt(parse(try_from_str = parse_hex))]
+        id: Option<u64>,
     },
 
     #[structopt(about = "Prints clip with <id>")]
@@ -148,7 +168,9 @@ pub enum SubCommand {
 }
 
 impl Command {
-    pub fn new() -> Command { StructOpt::from_args() }
+    pub fn new() -> Command {
+        StructOpt::from_args()
+    }
 
     fn load_config(&self) -> Config {
         let mut config =
@@ -239,6 +261,12 @@ impl Command {
                 Some(SubCommand::List { no_id }) => {
                     print_list(&mut client, no_id).await?;
                 }
+                Some(SubCommand::Info { id }) => {
+                    print_info(&mut client, id).await?;
+                }
+                Some(SubCommand::Search { context, pat }) => {
+                    print_search(&mut client, pat, context).await?;
+                }
                 Some(SubCommand::Get { id }) => {
                     let data: String = match id {
                         Some(id) => client.get(id).await?,
@@ -286,6 +314,10 @@ impl Command {
                         .into_iter()
                         .filter_map(|id| match parse_hex(&id) {
                             Ok(id) => Some(id),
+                            Err(err) => {
+                                eprintln!("Failed to parse ID {}, error: {:?}", id, err);
+                                None
+                            }
                             Err(err) => {
                                 eprintln!("Failed to parse ID {}, error: {:?}", id, err);
                                 None
@@ -355,8 +387,50 @@ impl Command {
 }
 
 #[inline]
-fn parse_hex(src: &str) -> Result<u64, ParseIntError> { u64::from_str_radix(src, 16) }
+fn parse_hex(src: &str) -> Result<u64, ParseIntError> {
+    u64::from_str_radix(src, 16)
+}
 
+async fn print_search(client: &mut GrpcClient, pat: Option<String>, context: bool) -> Result<(), Error> {
+    match pat {
+        Some(pat) => {
+            let clips = client.search(Some(pat)).await?;
+            for data in clips {
+                if !context {
+                    println!("{}", data);
+                } else {
+                    println!("{} {}", data, data.data.to_string());
+                }
+            }
+            "".to_string()
+        },
+        None => {
+            "".to_string()
+        }
+    };
+    Ok(())
+}
+async fn print_info(client: &mut GrpcClient, id: Option<u64>) -> Result<(), Error> {
+    match id {
+        Some(id) => {
+            let clip = client.info(Some(id)).await?;
+            println!("{}", clip);
+            "".to_string()
+        },
+        None => {
+            let clips = client.list().await?;
+            for data in clips {
+                println!("{}", data);
+            }
+            "".to_string()
+        }
+    };
+    // const LINE_LENGTH: Option<usize> = Some(100);
+    //
+    // let data = client.info(id.into()).await.context(error::CallGrpcClient)?;
+    //                 println!("{}", data);
+    Ok(())
+}
 async fn print_list(client: &mut GrpcClient, no_id: bool) -> Result<(), Error> {
     const LINE_LENGTH: Option<usize> = Some(100);
 

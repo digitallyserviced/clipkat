@@ -1,3 +1,4 @@
+
 tonic::include_proto!("manager");
 tonic::include_proto!("monitor");
 
@@ -22,12 +23,27 @@ impl From<crate::ClipboardType> for ClipboardType {
 impl From<crate::ClipboardType> for i32 {
     fn from(t: crate::ClipboardType) -> i32 { t as i32 }
 }
+impl From<ClipboardData> for crate::ClipboardData {
+    fn from(data: ClipboardData) -> crate::ClipboardData {
+        let timestamp = std::time::UNIX_EPOCH
+                    .checked_add(std::time::Duration::from_millis(data.timestamp))
+                    .unwrap_or_else(std::time::SystemTime::now);
+        crate::ClipboardData {
+            id: data.id as u64,
+            data: data.data,
+            size: data.size as usize,
+            clipboard_type: data.clipboard_type.into(),
+            timestamp: timestamp,
+        }
+    }
+}
 
 impl From<crate::ClipboardData> for ClipboardData {
     fn from(data: crate::ClipboardData) -> ClipboardData {
         ClipboardData {
             id: data.id as u64,
             data: data.data,
+            size: data.size as u64,
             clipboard_type: data.clipboard_type.into(),
             timestamp: data
                 .timestamp

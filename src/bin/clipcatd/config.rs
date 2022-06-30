@@ -105,7 +105,7 @@ impl Config {
     }
 
     #[inline]
-    pub fn default_max_history() -> usize { 50 }
+    pub fn default_max_history() -> usize { 100 }
 
     #[inline]
     pub fn default_pid_file_path() -> PathBuf {

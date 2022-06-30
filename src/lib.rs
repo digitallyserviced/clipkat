@@ -5,10 +5,12 @@ extern crate serde;
 extern crate snafu;
 
 use std::{
+    fmt,
     cmp::Ordering,
     hash::{Hash, Hasher},
-    time::SystemTime,
 };
+use std::time::SystemTime;
+use chrono::{DateTime, Local};
 
 #[cfg(feature = "app")]
 use app_dirs::AppInfo;
@@ -24,7 +26,6 @@ mod manager;
 mod monitor;
 
 pub mod editor;
-
 pub use self::{error::ClipboardError, event::ClipboardEvent};
 
 #[cfg(feature = "monitor")]
@@ -48,6 +49,7 @@ pub const MENU_PROGRAM_NAME: &str = "clipcat-menu";
 pub const MENU_CONFIG_NAME: &str = "clipcat-menu.toml";
 
 pub const NOTIFY_PROGRAM_NAME: &str = "clipcat-notify";
+pub const NOTIFY_CONFIG_NAME: &str = "clipcat-notify.toml";
 
 pub const DEFAULT_GRPC_PORT: u16 = 45045;
 pub const DEFAULT_GRPC_HOST: &str = "127.0.0.1";
@@ -59,6 +61,18 @@ pub const DEFAULT_WEBUI_HOST: &str = "127.0.0.1";
 pub enum ClipboardType {
     Clipboard = 0,
     Primary = 1,
+}
+
+impl fmt::Display for ClipboardType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        
+        let cliptype = match self {
+            ClipboardType::Primary => "Primary",
+            ClipboardType::Clipboard => "Clipboard",
+        };
+        write!(f, "{}", cliptype)
+    }
+    // add code here
 }
 
 impl From<i32> for ClipboardType {
@@ -80,6 +94,12 @@ pub struct ClipboardData {
     pub timestamp: SystemTime,
 }
 
+impl fmt::Display for ClipboardData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let ts = DateTime::<Local>::from(self.timestamp);
+        write!(f, "id: {:016x} created: {} type: {} size: {}", self.id, ts.format("%X %x"), self.clipboard_type, self.size)
+    }
+}
 impl ClipboardData {
     pub fn new(data: &str, clipboard_type: ClipboardType) -> ClipboardData {
         match clipboard_type {
@@ -89,22 +109,24 @@ impl ClipboardData {
     }
 
     pub fn new_clipboard(data: &str) -> ClipboardData {
+        let size=data.len();
         let cdata = data.to_owned();
         ClipboardData {
             id: Self::compute_id(data),
+            size,
             data: cdata,
-            size: cdata.len(),
             clipboard_type: ClipboardType::Clipboard,
             timestamp: SystemTime::now(),
         }
     }
 
     pub fn new_primary(data: &str) -> ClipboardData {
+        let size=data.len();
         let cdata = data.to_owned();
         ClipboardData {
             id: Self::compute_id(data),
+            size,
             data: cdata,
-            size: cdata.len(),
             clipboard_type: ClipboardType::Primary,
             timestamp: SystemTime::now(),
         }
