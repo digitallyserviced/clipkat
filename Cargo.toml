@@ -1,9 +1,12 @@
 [package]
 name = "clipcat"
-version = "0.5.0"
-authors = ["xrelkd 46590321+xrelkd@users.noreply.github.com"]
+version = "0.7.0"
+authors = ["digitallyserviced <1828125+digitallyserviced@users.noreply.github.com>"]
 edition = "2018"
+description = "Clipboard monitoring, history, management using client/server local and network remote."
+keywords = ["clipboard", "manage", "history", "cli"]
 
+categories = ["command-line-utilities", "development-tools", "text-editing", "text-processing","os::linux-apis"]
 [features]
 all = ["clipcatd", "clipcatctl", "clipcat-menu", "clipcat-notify"]
 default = ["clipcatd", "clipcatctl", "clipcat-menu", "clipcat-notify"]
