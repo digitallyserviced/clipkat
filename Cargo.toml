@@ -84,7 +84,8 @@ required-features = ["clipcat-notify"]
 
 [dependencies]
 futures = "0.3"
-tokio = { version = "1.7.0", features = ["rt-multi-thread", "sync","tracing"] }
+console-subscriber = "0.1.6"
+tokio = { version = "*", features = ["rt-multi-thread", "sync","tracing"] }
 snailquote = "0.3.1"
 snafu = "0.6"
 
@@ -113,7 +114,7 @@ bincode = { version = "1", optional = true }
 libc = { version = "0.2", optional = true }
 daemonize = { version = "0.4", optional = true }
 
-skim = { version = "0.9", optional = true }
+skim = { version = "0.9.4", optional = true }
 
 [build-dependencies]
 tonic-build = { version = "0.4", features = ["prost"] }

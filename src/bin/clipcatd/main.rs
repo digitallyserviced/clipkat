@@ -12,7 +12,6 @@ mod error;
 mod history;
 mod worker;
 use self::command::Command;
-
 pub static SHUTDOWN: atomic::AtomicBool = atomic::AtomicBool::new(false);
 
 fn main() {
