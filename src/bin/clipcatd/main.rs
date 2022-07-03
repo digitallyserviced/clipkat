@@ -11,13 +11,13 @@ mod config;
 mod error;
 mod history;
 mod worker;
-
 use self::command::Command;
 
 pub static SHUTDOWN: atomic::AtomicBool = atomic::AtomicBool::new(false);
 
 fn main() {
-    let command = Command::new();
+console_subscriber::init();
+let command = Command::new();
     if let Err(err) = command.run() {
         eprintln!("Error: {}", err);
         std::process::exit(1);

@@ -1,14 +1,14 @@
 use std::{num::ParseIntError, path::PathBuf};
+use std::str::*;
 
+use chrono::{Local, DateTime};
 use snafu::ResultExt;
 use structopt::clap::AppSettings::*;
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
-
 use clipcat::{
     editor::ExternalEditor,
-    grpc::{GrpcClient, GrpcClientError},
-    ClipboardData, MonitorState,
+    grpc::{GrpcClient}, MonitorState,
 };
 
 use crate::{
@@ -80,10 +80,13 @@ pub enum SubCommand {
 
     #[structopt(about = "Searches for clips with <pat> contained")]
     Search {
-        #[structopt(long = "context", short = "C")]
+        #[structopt(long = "shell", short = "S", about = "Format output to be friendly for parsing by jshell scripts")]
+        shell: bool,
+        
+        #[structopt(long = "context", short = "C", about = "Output the context of the found <pat> in the clip jcontent")]
         context: bool,
         
-        #[structopt(parse(try_from_str))]
+        #[structopt(parse(try_from_str), about = "The pattern to search for")]
         pat: Option<String>,
     },
 
@@ -184,7 +187,6 @@ impl Command {
         }
 
         if let Ok(log_level) = std::env::var("RUST_LOG") {
-            use std::str::FromStr;
             config.log_level = tracing::Level::from_str(&log_level).unwrap_or(tracing::Level::INFO);
         }
 
@@ -264,8 +266,8 @@ impl Command {
                 Some(SubCommand::Info { id }) => {
                     print_info(&mut client, id).await?;
                 }
-                Some(SubCommand::Search { context, pat }) => {
-                    print_search(&mut client, pat, context).await?;
+                Some(SubCommand::Search { shell, context, pat }) => {
+                    print_search(&mut client, shell, pat, context).await?;
                 }
                 Some(SubCommand::Get { id }) => {
                     let data: String = match id {
@@ -314,10 +316,6 @@ impl Command {
                         .into_iter()
                         .filter_map(|id| match parse_hex(&id) {
                             Ok(id) => Some(id),
-                            Err(err) => {
-                                eprintln!("Failed to parse ID {}, error: {:?}", id, err);
-                                None
-                            }
                             Err(err) => {
                                 eprintln!("Failed to parse ID {}, error: {:?}", id, err);
                                 None
@@ -391,16 +389,21 @@ fn parse_hex(src: &str) -> Result<u64, ParseIntError> {
     u64::from_str_radix(src, 16)
 }
 
-async fn print_search(client: &mut GrpcClient, pat: Option<String>, context: bool) -> Result<(), Error> {
+async fn print_search(client: &mut GrpcClient, shell: bool, pat: Option<String>, context: bool) -> Result<(), Error> {
     match pat {
         Some(pat) => {
-            let clips = client.search(Some(pat)).await?;
+            let clips = client.search(Some(pat.to_owned())).await?;
             for data in clips {
-                if !context {
-                    println!("{}", data);
-                } else {
-                    println!("{} {}", data, data.data.to_string());
-                }
+                let ts = DateTime::<Local>::from(data.timestamp);
+                let c = data.data.escape_default().to_string();
+                let options = SubCommand::Search { shell, context, pat: Some(pat.to_owned()) };
+                let out = match options {
+                    SubCommand::Search { shell: true, context: true, pat:_ } => format!("CLIP_ID='{}' CLIP_TIMESSTAMP='{timestamp}' CLIP_SIZE='{size}' CLIP_TYPE='{clip_type}' CLIP_CONTEXT='{context}' ",  data.id, size=data.size, timestamp=ts.format("%X %x"), clip_type=data.clipboard_type, context=c),
+                    SubCommand::Search { shell: true, context: false, pat:_ } => format!("CLIP_ID='{}' CLIP_TIMESSTAMP='{timestamp}' CLIP_SIZE='{size}' CLIP_TYPE='{clip_type}'",  data.id, size=data.size, timestamp=ts.format("%X %x"), clip_type=data.clipboard_type),
+                    SubCommand::Search { shell: false, context: true, pat:_ } => format!("{}\n\n{}\n", data, data.data.to_string()),
+                    _ => format!("{}", data),
+                };
+                    println!("{}", out)
             }
             "".to_string()
         },

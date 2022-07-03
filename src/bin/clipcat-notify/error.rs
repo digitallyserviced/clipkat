@@ -1,6 +1,6 @@
 use snafu::Snafu;
 
-use clipcat::{grpc::GrpcClientError};
+use clipcat::grpc::GrpcClientError;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub))]

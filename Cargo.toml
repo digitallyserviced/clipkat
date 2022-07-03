@@ -84,18 +84,18 @@ required-features = ["clipcat-notify"]
 
 [dependencies]
 futures = "0.3"
-tokio = { version = "1", features = ["rt-multi-thread", "sync"] }
-
+tokio = { version = "1.7.0", features = ["rt-multi-thread", "sync","tracing"] }
+snailquote = "0.3.1"
 snafu = "0.6"
 
 tonic = "0.4"
 prost = "0.7"
 http = "0.2"
 
-tracing = "0.1"
-tracing-subscriber = { version = "0.2", optional = true }
-tracing-journald = { version = "0.1", optional = true }
-tracing-futures = { version = "0.2", optional = true }
+tracing = "*"
+tracing-subscriber = { version = "*", optional = true }
+tracing-journald = { version = "*", optional = true }
+tracing-futures = { version = "*", optional = true }
 
 structopt = { version = "0.3", optional = true }
 app_dirs = { version = "1", optional = true }
@@ -117,7 +117,6 @@ skim = { version = "0.9", optional = true }
 
 [build-dependencies]
 tonic-build = { version = "0.4", features = ["prost"] }
-
 # [profile.release]
 # opt-level = 3
 # lto = true

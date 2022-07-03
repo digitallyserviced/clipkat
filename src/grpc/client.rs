@@ -9,7 +9,7 @@ use crate::{
         manager_client::ManagerClient, monitor_client::MonitorClient, BatchRemoveRequest,
         ClearRequest, DisableMonitorRequest, EnableMonitorRequest, GetCurrentClipboardRequest,
         GetCurrentPrimaryRequest, GetMonitorStateRequest, GetRequest, InsertRequest, LengthRequest,
-        InfoRequest, InfoResponse, SearchRequest, SearchResponse,
+        InfoRequest, SearchRequest,
         ListRequest, MarkAsClipboardRequest, MarkAsPrimaryRequest, RemoveRequest,
         ToggleMonitorRequest, UpdateRequest,
     },

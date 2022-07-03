@@ -1,5 +1,5 @@
 [Unit]
-Description=Starts the clipboard daemon
+Description=Starts the clipcat clipboard daemon
 
 [Service]
 Type=simple
