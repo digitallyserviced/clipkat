@@ -15,7 +15,6 @@ use self::command::Command;
 pub static SHUTDOWN: atomic::AtomicBool = atomic::AtomicBool::new(false);
 
 fn main() {
-console_subscriber::init();
 let command = Command::new();
     if let Err(err) = command.run() {
         eprintln!("Error: {}", err);

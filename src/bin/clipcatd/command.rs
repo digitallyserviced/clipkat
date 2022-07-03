@@ -52,7 +52,9 @@ pub enum SubCommand {
 }
 
 impl Command {
-    pub fn new() -> Command { StructOpt::from_args() }
+    pub fn new() -> Command {
+        StructOpt::from_args()
+    }
 
     fn load_config(&self) -> Result<Config, ConfigError> {
         let config_file = &self.config_file.clone().unwrap_or_else(Config::default_path);
@@ -143,11 +145,12 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
 
     {
         use tracing_subscriber::prelude::*;
-
-        let fmt_layer = tracing_subscriber::fmt::layer().with_target(false);
+        let console_layer = console_subscriber::spawn();
+        let fmt_layer = tracing_subscriber::fmt::layer().with_target(true);
         let level_filter = tracing_subscriber::filter::LevelFilter::from_level(config.log_level);
 
-        let registry = tracing_subscriber::registry().with(level_filter).with(fmt_layer);
+        let registry =
+            tracing_subscriber::registry().with(console_layer).with(level_filter).with(fmt_layer);
         match tracing_journald::layer() {
             Ok(layer) => registry.with(layer).init(),
             Err(_err) => {
@@ -175,13 +178,19 @@ struct PidFile {
 
 impl PidFile {
     #[inline]
-    fn exists(&self) -> bool { self.path.exists() }
+    fn exists(&self) -> bool {
+        self.path.exists()
+    }
 
     #[inline]
-    fn clone_path(&self) -> PathBuf { self.path().to_path_buf() }
+    fn clone_path(&self) -> PathBuf {
+        self.path().to_path_buf()
+    }
 
     #[inline]
-    fn path(&self) -> &Path { &self.path }
+    fn path(&self) -> &Path {
+        &self.path
+    }
 
     fn try_load(&self) -> Result<u64, Error> {
         let pid_data = std::fs::read_to_string(&self)
@@ -204,9 +213,13 @@ impl PidFile {
 }
 
 impl From<PathBuf> for PidFile {
-    fn from(path: PathBuf) -> PidFile { PidFile { path } }
+    fn from(path: PathBuf) -> PidFile {
+        PidFile { path }
+    }
 }
 
 impl AsRef<Path> for PidFile {
-    fn as_ref(&self) -> &Path { &self.path }
+    fn as_ref(&self) -> &Path {
+        &self.path
+    }
 }

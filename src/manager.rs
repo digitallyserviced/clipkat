@@ -1,11 +1,13 @@
 use std::{collections::HashMap, time::SystemTime};
 
 use snafu::ResultExt;
+use tracing::{instrument, Level};
 
-use crate::{error, ClipboardData, ClipboardError, ClipboardType};
+use crate::{error, ClipboardData, ClipboardError, ClipboardType, grpc::ManagerService};
 
 const DEFAULT_CAPACITY: usize = 40;
 
+#[derive(Debug)]
 pub struct ClipboardManager {
     clips: HashMap<u64, ClipboardData>,
     capacity: usize,
@@ -55,14 +57,17 @@ impl ClipboardManager {
     pub fn iter(&self) -> impl Iterator<Item = &ClipboardData> { self.clips.values() }
 
     #[inline]
+    #[instrument(name="search")]
     pub fn search(&self, pat: String) -> Vec<ClipboardData> { 
         self.clips.iter().filter_map(|(_id, v)| {
+            tracing::event!(Level::INFO, "check string");
             match v.to_owned().data.contains(&pat) {
                 true => Some(v.to_owned()),
                 false => None
             }
     }
-    ).collect() }
+    ).collect() 
+    }
     
     #[inline]
     pub fn info(&self, id: u64) -> Option<ClipboardData> { self.clips.get(&id).map(Clone::clone) }

@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use chrono::{DateTime, Local};
 use snafu::ResultExt;
 use tokio::{
     sync::{mpsc, Mutex},
@@ -12,9 +13,22 @@ use clipcat::{
 };
 
 use crate::error::{self, Error};
+pub enum WatchEventType {
+    ClipboardChanged,
+    ClipboardUpdated,
+    NotifyEvent,
+    WatchEvent,
+}
+
+pub struct WatchEvent {
+    ev_type: WatchEventType,
+    clip_id: usize,
+    timestamp: DateTime<Local>
+}
 
 pub enum Message {
     Shutdown,
+    WatchEvent,
 }
 
 #[allow(clippy::never_loop)]
@@ -43,6 +57,10 @@ pub fn start(
                     match msg {
                         Message::Shutdown => {
                             tracing::info!("gRPC service is shutting down gracefully");
+                            return;
+                        }
+                        Message::WatchEvent => {
+                            tracing::info!("gRPC service had watch event");
                             return;
                         }
                     }
